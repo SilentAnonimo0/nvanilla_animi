@@ -18,6 +18,8 @@ ENV         USER=container
 ENV         HOME=/home/container
 WORKDIR     /home/container
 
+RUN CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python
+
 STOPSIGNAL	SIGINT
 
 COPY        --chown=root:root --chmod=755 ./../entrypoint.sh /entrypoint.sh
