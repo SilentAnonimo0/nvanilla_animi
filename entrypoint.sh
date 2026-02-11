@@ -1,69 +1,19 @@
 #!/bin/bash
-# Python App Installation Script
-#
-# Server Files: /mnt/server
-apt update
-apt install -y git curl jq file unzip make gcc g++ libtool
+cd /home/container
 
-mkdir -p /mnt/server
-cd /mnt/server
+nvidia-smi
 
+mkdir -p models
+cd models
 
-## add git ending if it's not on the address
-if [[ ${GIT_ADDRESS} != *.git ]]; then
-    GIT_ADDRESS=${GIT_ADDRESS}.git
+if [ ! -f mistral-7b-instruct-v0.2.Q4_K_M.gguf ]; then
+    wget https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf
 fi
 
-if [ -z "${USERNAME}" ] && [ -z "${ACCESS_TOKEN}" ]; then
-    echo -e "using anon api call"
-else
-    GIT_ADDRESS="https://${USERNAME}:${ACCESS_TOKEN}@$(echo -e ${GIT_ADDRESS} | cut -d/ -f3-)"
-fi
+MODIFIED_STARTUP=`eval echo $(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')`
+echo ":/home/container$ ${MODIFIED_STARTUP}"
 
-## pull git python repo
-if [ "$(ls -A /mnt/server)" ]; then
-    echo -e "/mnt/server directory is not empty."
-    if [ -d .git ]; then
-        echo -e ".git directory exists"
-        if [ -f .git/config ]; then
-            echo -e "loading info from git config"
-            ORIGIN=$(git config --get remote.origin.url)
-        else
-            echo -e "files found with no git config"
-            echo -e "closing out without touching things to not break anything"
-            exit 10
-        fi
-    fi
+# mark installation complete
+touch /home/container/models/.done
 
-    if [ "${ORIGIN}" == "${GIT_ADDRESS}" ]; then
-        echo "pulling latest from github"
-        git pull
-    fi
-else
-    echo -e "/mnt/server is empty.\ncloning files into repo"
-    if [ -z ${BRANCH} ]; then
-        echo -e "cloning default branch"
-        git clone ${GIT_ADDRESS} .
-    else
-        echo -e "cloning ${BRANCH}'"
-        git clone --single-branch --branch ${BRANCH} ${GIT_ADDRESS} .
-    fi
-
-fi
-
-export HOME=/mnt/server
-
-echo "Installing python requirements into folder"
-if [[ ! -z ${PY_PACKAGES} ]]; then
-    pip install -U --prefix .local ${PY_PACKAGES}
-fi
-
-if [ -f /mnt/server/requirements.txt ]; then
-    pip install -U --prefix .local -r ${REQUIREMENTS_FILE}
-fi
-
-echo "Running custom script part"
-CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python
-
-echo -e "install complete"
-exit 0
+${MODIFIED_STARTUP}
