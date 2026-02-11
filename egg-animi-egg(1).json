@@ -1,0 +1,31 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2026-02-10T23:09:55-05:00",
+    "name": "Animi Egg",
+    "author": "silentanonimo2006@gmail.com",
+    "description": null,
+    "features": null,
+    "docker_images": {
+        "Animi PC": "ghcr.io\/silentanonimo0\/animi_img:latest"
+    },
+    "file_denylist": [],
+    "startup": "python -m llama_cpp.server --host 0.0.0.0 --port {{SERVER_PORT}} --model \/home\/container\/models\/mistral-7b-instruct-v0.2.Q4_K_M.gguf --n_gpu_layers -1",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"Uvicorn running on \"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\ncd \/home\/container || exit 1\r\nmkdir -p models\r\ncd models || exit 1\r\n\r\nif [ ! -f mistral-7b-instruct-v0.2.Q4_K_M.gguf ]; then\r\n    wget https:\/\/huggingface.co\/TheBloke\/Mistral-7B-Instruct-v0.2-GGUF\/resolve\/main\/mistral-7b-instruct-v0.2.Q4_K_M.gguf\r\nfi\r\n\r\n# mark installation complete\r\ntouch \/home\/container\/models\/.done",
+            "container": "python:3.8-slim-bookworm",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": []
+}
