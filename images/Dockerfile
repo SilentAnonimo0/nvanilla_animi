@@ -1,21 +1,34 @@
-FROM		nvcr.io/nvidia/k8s/container-toolkit:v1.17.9-ubuntu20.04
-LABEL 		org.opencontainers.image.source=https://github.com/SilentAnonimo0/nvanilla_animi/blob/main/images/Dockerfile
+ARG CUDA_IMAGE="13.1.1-devel-ubuntu24.04"
+FROM nvidia/cuda:${CUDA_IMAGE}
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Etc/UTC
+ENV HOST=0.0.0.0
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        python3 python3-pip python3-dev python3-venv \
-        git build-essential cmake && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y git build-essential \
+    python3 python3-pip python3.12-venv gcc wget \
+    ocl-icd-opencl-dev opencl-headers clinfo \
+    libclblast-dev libopenblas-dev \
+    && mkdir -p /etc/OpenCL/vendors && echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
 
-ENV         USER=container
-ENV         HOME=/home/container
-WORKDIR     /home/container
+RUN useradd -m -d /home/container -s /bin/bash container
 
-STOPSIGNAL	SIGINT
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-COPY        --chown=root:root --chmod=755 ./../entrypoint.sh /entrypoint.sh
-ENTRYPOINT	["/usr/bin/ti@ni", "-g", "--"]
-CMD         ["/entrypoint.sh"]
+COPY . .
+
+ENV CUDA_DOCKER_ARCH=all
+ENV GGML_CUDA=1
+
+RUN python3 -m pip install --upgrade pip pytest cmake scikit-build setuptools fastapi uvicorn sse-starlette pydantic-settings starlette-context
+
+RUN CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python
+
+RUN chown -R container:container /home/container /opt/venv
+WORKDIR /home/container
+
+USER container
+ENV USER=container HOME=/home/container
+
+COPY ./entrypoint.sh /entrypoint.sh
+CMD ["/bin/bash", "/entrypoint.sh"]
