@@ -166,7 +166,6 @@ async function sendMessage() {
         const data = await res.json();
         let reply = data.choices?.[0]?.text?.trim() || "…";
 
-        // HARD sentence clamp (extra safety)
         reply = reply.split(/(?<=[.!?])\s+/).slice(0, 3).join(" ");
 
         history.push({ role: "assistant", content: reply });
