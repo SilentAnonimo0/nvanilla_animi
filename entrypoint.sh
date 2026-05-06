@@ -1,19 +1,12 @@
 #!/bin/bash
+# Move to the venv and home
+source /opt/venv/bin/activate
 cd /home/container
 
+# Output GPU status for your logs
 nvidia-smi
 
-mkdir -p models
-cd models
+echo "Starting Animi Backend..."
 
-if [ ! -f mistral-7b-instruct-v0.2.Q4_K_M.gguf ]; then
-    wget https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf
-fi
-
-MODIFIED_STARTUP=`eval echo $(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')`
-echo ":/home/container$ ${MODIFIED_STARTUP}"
-
-# mark installation complete
-touch /home/container/models/.done
-
-${MODIFIED_STARTUP}
+# Using 'exec' is what makes the Stop button work!
+exec python3 server.py
